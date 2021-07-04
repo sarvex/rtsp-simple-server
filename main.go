@@ -9,6 +9,7 @@ import (
 
 	"gopkg.in/alecthomas/kingpin.v2"
 
+	"github.com/aler9/rtsp-simple-server/internal/api"
 	"github.com/aler9/rtsp-simple-server/internal/conf"
 	"github.com/aler9/rtsp-simple-server/internal/confwatcher"
 	"github.com/aler9/rtsp-simple-server/internal/hlsserver"
@@ -32,6 +33,7 @@ type program struct {
 	confFound       bool
 	stats           *stats.Stats
 	logger          *logger.Logger
+	api             *api.API
 	metrics         *metrics.Metrics
 	pprof           *pprof.PPROF
 	pathMan         *pathman.PathManager
@@ -170,6 +172,17 @@ func (p *program) createResources(initial bool) error {
 		p.Log(logger.Info, "rtsp-simple-server %s", version)
 		if !p.confFound {
 			p.Log(logger.Warn, "configuration file not found, using the default one")
+		}
+	}
+
+	if p.conf.API {
+		if p.api == nil {
+			p.api, err = api.New(
+				p.conf.APIAddress,
+				p)
+			if err != nil {
+				return err
+			}
 		}
 	}
 
@@ -334,6 +347,14 @@ func (p *program) closeResources(newConf *conf.Conf) {
 		closeLogger = true
 	}
 
+	closeAPI := false
+	if newConf == nil ||
+		newConf.API != p.conf.API ||
+		newConf.APIAddress != p.conf.APIAddress ||
+		closeStats {
+		closeAPI = true
+	}
+
 	closeMetrics := false
 	if newConf == nil ||
 		newConf.Metrics != p.conf.Metrics ||
@@ -467,6 +488,11 @@ func (p *program) closeResources(newConf *conf.Conf) {
 	if closeMetrics && p.metrics != nil {
 		p.metrics.Close()
 		p.metrics = nil
+	}
+
+	if closeAPI && p.api != nil {
+		p.api.Close()
+		p.api = nil
 	}
 
 	if closeLogger && p.logger != nil {
