@@ -14,7 +14,7 @@ require (
 	github.com/notedit/rtmp v0.0.2
 	github.com/pion/rtp v1.6.2
 	github.com/stretchr/testify v1.6.1
-	golang.org/x/crypto v0.0.0-20201221181555-eec23a3978ad
+	golang.org/x/crypto v0.1.0
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 	gopkg.in/yaml.v2 v2.2.8
 )
